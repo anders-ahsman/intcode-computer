@@ -1,0 +1,23 @@
+service: intcodeComputer
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: eu-north-1
+  websocketsApiName: intcode-computer-websockets
+  websocketsApiRouteSelectionExpression: $request.body.action
+
+functions:
+  connectHandler:
+    handler: handler.connectHandler
+    events:
+      - websocket: $connect
+  disconnectHandler:
+    handler: handler.disconnectHandler
+    events:
+      - websocket: $disconnect
+  defaultHandler:
+    handler: handler.defaultHandler
+    events:
+      - websocket: $default
