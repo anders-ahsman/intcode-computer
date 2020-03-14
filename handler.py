@@ -37,7 +37,7 @@ def defaultHandler(event, context):
 
     try:
         body = json.loads(event['body'])
-        _run_computer(body['program'], body['input'], lambda output: send_to_client(str(output)))
+        _run_program(body['program'], body['input'], lambda output: send_to_client(str(output)))
         send_to_client('Program completed.')
     except (JSONDecodeError, KeyError):
         msg = f'Hello connection ID {connection_id}!\n' + \
@@ -52,7 +52,7 @@ def defaultHandler(event, context):
 
     return response
 
-def _run_computer(program, inp, output_cb):
+def _run_program(program, inp, output_cb):
     computer = IntcodeComputer(program)
     computer.inputs.append(inp)
     it = computer.run()
