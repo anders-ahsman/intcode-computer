@@ -69,6 +69,17 @@ def test_valid_input_responds_with_program_output(mock_boto3):
 
     defaultHandler(event, None)
 
-    mock_apigw.post_to_connection.assert_called_once()
-    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+    assert mock_apigw.post_to_connection.call_count == 2
+    msg = mock_apigw.post_to_connection.call_args_list[0].kwargs['Data'].decode('utf8')
     assert msg == '42'
+
+@patch('handler.boto3')
+def test_valid_input_ends_with_program_completed_message(mock_boto3):
+    mock_apigw = Mock()
+    mock_boto3.client.return_value = mock_apigw
+    event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
+
+    defaultHandler(event, None)
+
+    msg = mock_apigw.post_to_connection.call_args_list[-1].kwargs['Data'].decode('utf8')
+    assert msg == 'Program completed.'

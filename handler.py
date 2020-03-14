@@ -37,6 +37,7 @@ def defaultHandler(event, context):
         output_cb = lambda output: api_gw.post_to_connection(
             Data=str(output).encode('utf8'), ConnectionId=connection_id)
         _run_computer(body['program'], body['input'], output_cb)
+        output_cb('Program completed.')
     except (JSONDecodeError, KeyError):
         msg = f'Hello connection ID {connection_id}!\n' + \
             'Send JSON object with program and input to run, e.g.\n' + \
