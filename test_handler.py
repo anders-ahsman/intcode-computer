@@ -50,6 +50,18 @@ def test_invalid_input_responds_with_usage_msg(mock_boto3):
     assert 'Send JSON object with program and input to run' in msg
 
 @patch('handler.boto3')
+def test_input_without_required_keys_responds_with_usage_msg(mock_boto3):
+    mock_apigw = Mock()
+    mock_boto3.client.return_value = mock_apigw
+    event['body'] = json.dumps({'msg': 'hello'})
+
+    defaultHandler(event, None)
+
+    mock_apigw.post_to_connection.assert_called_once()
+    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+    assert 'Send JSON object with program and input to run' in msg
+
+@patch('handler.boto3')
 def test_valid_input_responds_with_program_output(mock_boto3):
     mock_apigw = Mock()
     mock_boto3.client.return_value = mock_apigw
