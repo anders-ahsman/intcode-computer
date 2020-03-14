@@ -28,19 +28,20 @@ def disconnectHandler(event, context):
 def defaultHandler(event, context):
     print('defaultHandler', event)
 
-    gatewayapi = boto3.client('apigatewaymanagementapi',
+    api_gw = boto3.client('apigatewaymanagementapi',
         endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}')
     connection_id = event['requestContext']['connectionId']
 
     try:
         body = json.loads(event['body'])
-        msg = _run_computer(body['program'], body['input'])
+        output_cb = lambda output: api_gw.post_to_connection(
+            Data=str(output).encode('utf8'), ConnectionId=connection_id)
+        _run_computer(body['program'], body['input'], output_cb)
     except JSONDecodeError:
         msg = f'Hello connection ID {connection_id}!\n' + \
             'Send JSON object with program and input to run, e.g.\n' + \
             '{"program": [3,0,4,0,99], "input": 42}'
-
-    gatewayapi.post_to_connection(Data=msg.encode('utf8'), ConnectionId=connection_id)
+        api_gw.post_to_connection(Data=msg.encode('utf8'), ConnectionId=connection_id)
 
     response = {
         "statusCode": 200,
@@ -49,14 +50,14 @@ def defaultHandler(event, context):
 
     return response
 
-def _run_computer(program, inputs) -> str:
+def _run_computer(program, inp, output_cb):
     computer = IntcodeComputer(program)
-    computer.inputs.append(inputs)
+    computer.inputs.append(inp)
     it = computer.run()
 
-    last_output = None
     try:
         while True:
-            last_output = next(it)
+            output = next(it)
+            output_cb(output)
     except StopIteration:
-        return str(last_output)
+        pass
