@@ -10,14 +10,14 @@ provider:
 
 functions:
   connectHandler:
-    handler: handler.connectHandler
+    handler: handler.connect_handler
     events:
       - websocket: $connect
   disconnectHandler:
-    handler: handler.disconnectHandler
+    handler: handler.disconnect_handler
     events:
       - websocket: $disconnect
   defaultHandler:
-    handler: handler.defaultHandler
+    handler: handler.default_handler
     events:
       - websocket: $default

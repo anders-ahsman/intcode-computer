@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, Mock
 
-from handler import defaultHandler
+from handler import default_handler
 
 event = {
 	'requestContext': {
@@ -43,7 +43,7 @@ def test_invalid_json_input__responds_with_usage_msg(mock_boto3):
     mock_boto3.client.return_value = mock_apigw
     event['body'] = 'Hello'
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     mock_apigw.post_to_connection.assert_called_once()
     msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
@@ -55,7 +55,7 @@ def test_input_without_required_keys__responds_with_usage_msg(mock_boto3):
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'msg': 'hello'})
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     mock_apigw.post_to_connection.assert_called_once()
     msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
@@ -67,7 +67,7 @@ def test_program_with_invalid_instruction__responds_with_error_message(mock_boto
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'program': [23], 'input': []})
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     mock_apigw.post_to_connection.assert_called_once()
     msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
@@ -80,7 +80,7 @@ def test_program_with_invalid_mode__responds_with_error_message(mock_boto3):
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'program': [301], 'input': []})
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     mock_apigw.post_to_connection.assert_called_once()
     msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
@@ -93,7 +93,7 @@ def test_valid_input__responds_with_program_output(mock_boto3):
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     assert mock_apigw.post_to_connection.call_count == 2
     msg = mock_apigw.post_to_connection.call_args_list[0].kwargs['Data'].decode('utf8')
@@ -105,7 +105,7 @@ def test_valid_input__response_ends_with_program_completed_message(mock_boto3):
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
 
-    defaultHandler(event, None)
+    default_handler(event, None)
 
     msg = mock_apigw.post_to_connection.call_args_list[-1].kwargs['Data'].decode('utf8')
     assert msg == 'Program completed.'
