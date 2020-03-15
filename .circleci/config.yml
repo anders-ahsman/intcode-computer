@@ -1,0 +1,43 @@
+version: 2.0
+jobs:
+  build:
+    docker:
+      - image: emmry/circleci-docker-primary:1.0.1
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Install dependencies
+          command: pipenv install
+      - save_cache:
+          key: deps-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ".venv"
+      - run:
+          name: Run unit tests
+          command: |
+            mkdir test-results
+            pipenv run pytest --junitxml=test-results/unit.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+      - run:
+          name: Deploy
+          command: sls deploy
+      - run:
+          name: Run e2e tests
+          command: |
+            export DEPLOYED_URL=`sls info -v | grep ServiceEndpointWebsocket | awk 'gsub("ServiceEndpointWebsocket: ", "")'`
+            pipenv run pytest test_e2e.py --junitxml=test-results/e2e.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+      - build:
+          context: default
