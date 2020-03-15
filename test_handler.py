@@ -74,7 +74,7 @@ def test_valid_input__responds_with_program_output(mock_boto3):
     assert msg == '42'
 
 @patch('handler.boto3')
-def test_valid_input__repsonse_ends_with_program_completed_message(mock_boto3):
+def test_valid_input__response_ends_with_program_completed_message(mock_boto3):
     mock_apigw = Mock()
     mock_boto3.client.return_value = mock_apigw
     event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
