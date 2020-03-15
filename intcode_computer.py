@@ -3,6 +3,9 @@ from enum import Enum
 from typing import DefaultDict, List, Tuple
 
 
+class IntcodeProgramException(Exception):
+    pass
+
 class Mode(Enum):
     POSITION = 0
     IMMEDIATE = 1
@@ -85,14 +88,18 @@ class IntcodeComputer:
                 return
 
             else:
-                raise Exception(f'Unknown instruction {instruction}')
+                raise IntcodeProgramException(f'Unknown instruction {instruction}')
 
     def get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
         mode3, mode2, mode1 = [Mode(int(m)) for m in list(f'{opcode:05}'[:3])]
         return mode1, mode2, mode3
 
     def get_instruction(self, opcode: int) -> Instruction:
-        return Instruction(int(str(opcode)[-2:]))
+        instr = str(opcode)[-2:]
+        try:
+            return Instruction(int(instr))
+        except ValueError:
+            raise IntcodeProgramException(f'Invalid instruction {instr}')
 
     def get_params(self, mode1: Mode, mode2: Mode) -> Tuple[int, int]:
         return self.get_param(mode1, 1), self.get_param(mode2, 2)

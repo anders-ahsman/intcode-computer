@@ -3,7 +3,7 @@ from json.decoder import JSONDecodeError
 
 import boto3
 
-from intcode_computer import IntcodeComputer
+from intcode_computer import IntcodeComputer, IntcodeProgramException
 
 def connectHandler(event, context):
     print('connectHandler', event)
@@ -44,6 +44,8 @@ def defaultHandler(event, context):
             'Send JSON object with program and input to run, e.g.\n' + \
             '{"program": [3,0,4,0,99], "input": 42}'
         send_to_client(msg)
+    except IntcodeProgramException as e:
+        send_to_client(f'Intcode program error: {e}')
 
     response = {
         "statusCode": 200,
