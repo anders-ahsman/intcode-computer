@@ -88,18 +88,21 @@ class IntcodeComputer:
                 return
 
             else:
-                raise IntcodeProgramException(f'Unknown instruction {instruction}')
+                raise IntcodeProgramException(f'Unknown instruction {instruction}.')
 
     def get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
-        mode3, mode2, mode1 = [Mode(int(m)) for m in list(f'{opcode:05}'[:3])]
-        return mode1, mode2, mode3
+        try:
+            mode3, mode2, mode1 = [Mode(int(m)) for m in list(f'{opcode:05}'[:3])]
+            return mode1, mode2, mode3
+        except ValueError:
+            raise IntcodeProgramException(f'Unknown mode.')
 
     def get_instruction(self, opcode: int) -> Instruction:
         instr = str(opcode)[-2:]
         try:
             return Instruction(int(instr))
         except ValueError:
-            raise IntcodeProgramException(f'Invalid instruction {instr}')
+            raise IntcodeProgramException(f'Invalid instruction {instr}.')
 
     def get_params(self, mode1: Mode, mode2: Mode) -> Tuple[int, int]:
         return self.get_param(mode1, 1), self.get_param(mode2, 2)
@@ -112,7 +115,7 @@ class IntcodeComputer:
         elif mode == Mode.RELATIVE:
             return self.program[self.relative_base + self.program[self.idx + offset]]
 
-        raise Exception(f'Unknown mode {mode}')
+        raise IntcodeProgramException(f'Unknown mode {mode}.')
 
     def set_value(self, mode: Mode, offset: int, value: int) -> None:
         if mode == Mode.POSITION:
@@ -120,4 +123,4 @@ class IntcodeComputer:
         elif mode == Mode.RELATIVE:
             self.program[self.relative_base + self.program[self.idx + offset]] = value
         else:
-            raise Exception(f'Unknown mode {mode}')
+            raise IntcodeProgramException(f'Unknown mode {mode}.')

@@ -74,6 +74,18 @@ def test_program_with_invalid_instruction__responds_with_error_message(mock_boto
     assert 'Intcode program error' in msg
 
 @patch('handler.boto3')
+def test_program_with_invalid_mode__responds_with_error_message(mock_boto3):
+    mock_apigw = Mock()
+    mock_boto3.client.return_value = mock_apigw
+    event['body'] = json.dumps({'program': [301], 'input': []})
+
+    defaultHandler(event, None)
+
+    mock_apigw.post_to_connection.assert_called_once()
+    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+    assert 'Intcode program error' in msg
+
+@patch('handler.boto3')
 def test_valid_input__responds_with_program_output(mock_boto3):
     mock_apigw = Mock()
     mock_boto3.client.return_value = mock_apigw
