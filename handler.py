@@ -32,7 +32,7 @@ def defaultHandler(event, context):
         endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}')
     connection_id = event['requestContext']['connectionId']
 
-    def send_to_client(msg):
+    def send_to_client(msg: str) -> None:
         api_gw.post_to_connection(Data=msg.encode('utf8'), ConnectionId=connection_id)
 
     try:
