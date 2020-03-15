@@ -25,64 +25,65 @@ class Instruction(Enum):
 
 class IntcodeComputer:
     def __init__(self, program: List[int]):
-        self.idx: int = 0
-        self.relative_base: int = 0
         self.inputs: List[int] = []
-        self.program: DefaultDict[int, int] = defaultdict(int)
+
+        self._idx: int = 0
+        self._relative_base: int = 0
+        self._program: DefaultDict[int, int] = defaultdict(int)
         for i, op in enumerate(program):
-            self.program[i] = op
+            self._program[i] = op
 
     def run(self):
         while True:
-            opcode = self.program[self.idx]
-            instruction = self.get_instruction(opcode)
-            mode1, mode2, mode3 = self.get_modes(opcode)
+            opcode = self._program[self._idx]
+            instruction = self._get_instruction(opcode)
+            mode1, mode2, mode3 = self._get_modes(opcode)
 
             if instruction == Instruction.ADD:
-                param1, param2 = self.get_params(mode1, mode2)
+                param1, param2 = self._get_params(mode1, mode2)
                 result = param1 + param2
-                self.set_value(mode3, 3, result)
-                self.idx += 4
+                self._set_value(mode3, 3, result)
+                self._idx += 4
 
             elif instruction == Instruction.MULTIPLY:
-                param1, param2 = self.get_params(mode1, mode2)
+                param1, param2 = self._get_params(mode1, mode2)
                 result = param1 * param2
-                self.set_value(mode3, 3, result)
-                self.idx += 4
+                self._set_value(mode3, 3, result)
+                self._idx += 4
 
             elif instruction == Instruction.INPUT:
                 indata = self.inputs.pop(0)
-                self.set_value(mode1, 1, indata)
-                self.idx += 2
+                self._set_value(mode1, 1, indata)
+                self._idx += 2
 
             elif instruction == Instruction.OUTPUT:
-                yield self.get_param(mode1, 1)
-                self.idx += 2
+                yield self._get_param(mode1, 1)
+                self._idx += 2
 
             elif instruction == Instruction.JUMP_IF_TRUE:
-                param1, param2 = self.get_params(mode1, mode2)
-                self.idx = param2 if param1 else self.idx + 3
+                param1, param2 = self._get_params(mode1, mode2)
+                self._idx = param2 if param1 else self._idx + 3
 
             elif instruction == Instruction.JUMP_IF_FALSE:
-                param1, param2 = self.get_params(mode1, mode2)
-                self.idx = param2 if not param1 else self.idx + 3
+                param1, param2 = self._get_params(mode1, mode2)
+                self._idx = param2 if not param1 else self._idx + 3
 
             elif instruction == Instruction.LESS_THAN:
-                param1, param2 = self.get_params(mode1, mode2)
+                param1, param2 = self._get_params(mode1, mode2)
                 result = int(param1 < param2)
-                self.set_value(mode3, 3, result)
-                self.idx += 4
+                self._set_value(mode3, 3, result)
+                self._idx += 4
 
             elif instruction == Instruction.EQUALS:
-                param1, param2 = self.get_params(mode1, mode2)
+                param1, param2 = self._get_params(mode1, mode2)
                 result = int(param1 == param2)
-                self.set_value(mode3, 3, result)
-                self.idx += 4
+                self._set_value(mode3, 3, result)
+                self._idx += 4
 
             elif instruction == Instruction.ADJUST_RELATIVE_BASE:
-                param1 = self.get_param(mode1, 1)
-                self.relative_base += param1
-                self.idx += 2
+                param1 = self._get_param(mode1, 1)
+                self._relative_base += param1
+                self._idx += 2
 
             elif instruction == Instruction.ABORT:
                 return
@@ -90,37 +91,37 @@ class IntcodeComputer:
             else:
                 raise IntcodeProgramException(f'Unknown instruction {instruction}.')
 
-    def get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
+    def _get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
         try:
             mode3, mode2, mode1 = [Mode(int(m)) for m in list(f'{opcode:05}'[:3])]
             return mode1, mode2, mode3
         except ValueError:
             raise IntcodeProgramException(f'Unknown mode.')
 
-    def get_instruction(self, opcode: int) -> Instruction:
+    def _get_instruction(self, opcode: int) -> Instruction:
         instr = str(opcode)[-2:]
         try:
             return Instruction(int(instr))
         except ValueError:
             raise IntcodeProgramException(f'Invalid instruction {instr}.')
 
-    def get_params(self, mode1: Mode, mode2: Mode) -> Tuple[int, int]:
-        return self.get_param(mode1, 1), self.get_param(mode2, 2)
+    def _get_params(self, mode1: Mode, mode2: Mode) -> Tuple[int, int]:
+        return self._get_param(mode1, 1), self._get_param(mode2, 2)
 
-    def get_param(self, mode: Mode, offset: int) -> int:
+    def _get_param(self, mode: Mode, offset: int) -> int:
         if mode == Mode.POSITION:
-            return self.program[self.program[self.idx + offset]]
+            return self._program[self._program[self._idx + offset]]
         elif mode == Mode.IMMEDIATE:
-            return self.program[self.idx + offset]
+            return self._program[self._idx + offset]
         elif mode == Mode.RELATIVE:
-            return self.program[self.relative_base + self.program[self.idx + offset]]
+            return self._program[self._relative_base + self._program[self._idx + offset]]
 
         raise IntcodeProgramException(f'Unknown mode {mode}.')
 
-    def set_value(self, mode: Mode, offset: int, value: int) -> None:
+    def _set_value(self, mode: Mode, offset: int, value: int) -> None:
         if mode == Mode.POSITION:
-            self.program[self.program[self.idx + offset]] = value
+            self._program[self._program[self._idx + offset]] = value
         elif mode == Mode.RELATIVE:
-            self.program[self.relative_base + self.program[self.idx + offset]] = value
+            self._program[self._relative_base + self._program[self._idx + offset]] = value
         else:
             raise IntcodeProgramException(f'Unknown mode {mode}.')
