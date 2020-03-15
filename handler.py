@@ -6,7 +6,7 @@ import boto3
 from intcode_computer import IntcodeComputer, IntcodeProgramException
 
 def connect_handler(event, context):
-    print('connect_handler', event)
+    print('event:', event)
 
     response = {
         "statusCode": 200,
@@ -16,7 +16,7 @@ def connect_handler(event, context):
     return response
 
 def disconnect_handler(event, context):
-    print('disconnect_handler', event)
+    print('event:', event)
 
     response = {
         "statusCode": 200,
@@ -26,7 +26,7 @@ def disconnect_handler(event, context):
     return response
 
 def default_handler(event, context):
-    print('default_handler', event)
+    print('event:', event)
 
     api_gw = boto3.client('apigatewaymanagementapi',
         endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}')
