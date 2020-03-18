@@ -1,5 +1,8 @@
 service: intcodeComputer
 
+custom:
+  tableName: 'intcode-computer-${self:provider.stage}'
+
 provider:
   name: aws
   runtime: python3.8
@@ -7,6 +10,19 @@ provider:
   memorySize: 128
   websocketsApiName: intcode-computer-websockets
   websocketsApiRouteSelectionExpression: $request.body.action
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["IntcodeComputerDynamoDBTable", "Arn" ] }
+  environment:
+    INTCODE_TABLE: ${self:custom.tableName}
 
 functions:
   connectHandler:
@@ -21,3 +37,26 @@ functions:
     handler: handler.default_handler
     events:
       - websocket: $default
+  additionalInputHandler:
+    handler: handler.additional_input_handler
+    events:
+      - websocket:
+          route: additional_input
+
+resources:
+  Resources:
+    IntcodeComputerDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: ConnectionId
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: ConnectionId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 3
+          WriteCapacityUnits: 3
+        TableName: ${self:custom.tableName}

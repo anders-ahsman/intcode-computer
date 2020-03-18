@@ -1,4 +1,5 @@
 import json
+import unittest
 from unittest.mock import patch, Mock
 
 from handler import default_handler
@@ -37,75 +38,91 @@ event = {
 	'isBase64Encoded': False
 }
 
-@patch('handler.boto3')
-def test_invalid_json_input__responds_with_usage_msg(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = 'Hello'
+class TestDefaultHandler(unittest.TestCase):
+    def setUp(self):
+        self.mock_apigw = Mock()
+        self.mock_dynamodb = Mock()
+        self.mocks = {
+            'apigatewaymanagementapi': self.mock_apigw,
+            'dynamodb': self.mock_dynamodb
+        }
 
-    default_handler(event, None)
+    def mock_for_service_selector(self, service_name, *args, **kwargs):
+        return self.mocks[service_name]
 
-    mock_apigw.post_to_connection.assert_called_once()
-    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
-    assert 'Send JSON object with program and input to run' in msg
+    @patch('handler.boto3')
+    def test_body_invalid_json__responds_with_usage_msg(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = 'Hello'
 
-@patch('handler.boto3')
-def test_input_without_required_keys__responds_with_usage_msg(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = json.dumps({'msg': 'hello'})
+        default_handler(event, None)
 
-    default_handler(event, None)
+        self.mock_apigw.post_to_connection.assert_called_once()
+        msg = self.mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+        assert 'Send JSON object with program and input to run' in msg
 
-    mock_apigw.post_to_connection.assert_called_once()
-    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
-    assert 'Send JSON object with program and input to run' in msg
+    @patch('handler.boto3')
+    def test_body_without_required_keys__responds_with_usage_msg(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'msg': 'hello'})
 
-@patch('handler.boto3')
-def test_program_with_invalid_instruction__responds_with_error_message(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = json.dumps({'program': [23], 'input': []})
+        default_handler(event, None)
 
-    default_handler(event, None)
+        self.mock_apigw.post_to_connection.assert_called_once()
+        msg = self.mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+        assert 'Send JSON object with program and input to run' in msg
 
-    mock_apigw.post_to_connection.assert_called_once()
-    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
-    assert 'Intcode program error' in msg
-    assert 'Invalid instruction' in msg
+    @patch('handler.boto3')
+    def test_program_with_invalid_instruction__responds_with_error_message(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'program': [23], 'input': []})
 
-@patch('handler.boto3')
-def test_program_with_invalid_mode__responds_with_error_message(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = json.dumps({'program': [301], 'input': []})
+        default_handler(event, None)
 
-    default_handler(event, None)
+        self.mock_apigw.post_to_connection.assert_called_once()
+        msg = self.mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+        assert 'Intcode program error' in msg
+        assert 'Invalid instruction' in msg
 
-    mock_apigw.post_to_connection.assert_called_once()
-    msg = mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
-    assert 'Intcode program error' in msg
-    assert 'Invalid mode' in msg
+    @patch('handler.boto3')
+    def test_program_with_invalid_mode__responds_with_error_message(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'program': [301], 'input': []})
 
-@patch('handler.boto3')
-def test_valid_input__responds_with_program_output(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
+        default_handler(event, None)
 
-    default_handler(event, None)
+        self.mock_apigw.post_to_connection.assert_called_once()
+        msg = self.mock_apigw.post_to_connection.call_args.kwargs['Data'].decode('utf8')
+        assert 'Intcode program error' in msg
+        assert 'Invalid mode' in msg
 
-    assert mock_apigw.post_to_connection.call_count == 2
-    msg = mock_apigw.post_to_connection.call_args_list[0].kwargs['Data'].decode('utf8')
-    assert msg == '42'
+    @patch('handler.boto3')
+    def test_valid_body__responds_with_program_output(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': [42]})
 
-@patch('handler.boto3')
-def test_valid_input__response_ends_with_program_completed_message(mock_boto3):
-    mock_apigw = Mock()
-    mock_boto3.client.return_value = mock_apigw
-    event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': 42})
+        default_handler(event, None)
 
-    default_handler(event, None)
+        assert self.mock_apigw.post_to_connection.call_count == 2
+        msg = self.mock_apigw.post_to_connection.call_args_list[0].kwargs['Data'].decode('utf8')
+        assert msg == '42'
 
-    msg = mock_apigw.post_to_connection.call_args_list[-1].kwargs['Data'].decode('utf8')
-    assert msg == 'Program completed.'
+    @patch('handler.boto3')
+    def test_valid_body__response_ends_with_program_completed_message(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'program': [3,0,4,0,99], 'input': [42]})
+
+        default_handler(event, None)
+
+        msg = self.mock_apigw.post_to_connection.call_args_list[-1].kwargs['Data'].decode('utf8')
+        assert msg == 'Program completed.'
+
+    @patch('handler.boto3')
+    def test_valid_body_missing_input__asks_for_input(self, mock_boto3):
+        mock_boto3.client.side_effect = self.mock_for_service_selector
+        event['body'] = json.dumps({'program': [3,0,3,0,99], 'input': [42]})
+
+        default_handler(event, None)
+
+        msg = self.mock_apigw.post_to_connection.call_args_list[0].kwargs['Data'].decode('utf8')
+        assert 'Additional input required' in msg

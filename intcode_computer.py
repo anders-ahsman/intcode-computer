@@ -1,9 +1,14 @@
 from collections import defaultdict
 from enum import Enum
-from typing import DefaultDict, List, Tuple
+import json
+from typing import DefaultDict, Dict, List, Tuple
+from unittest.mock import ANY
 
 
 class IntcodeProgramException(Exception):
+    pass
+
+class MissingInputException(Exception):
     pass
 
 class Mode(Enum):
@@ -24,8 +29,8 @@ class Instruction(Enum):
     ABORT = 99
 
 class IntcodeComputer:
-    def __init__(self, program: List[int]):
-        self.inputs: List[int] = []
+    def __init__(self, program: List[int], inputs: List[int]) -> None:
+        self.inputs: List[int] = inputs
 
         self._idx: int = 0
         self._relative_base: int = 0
@@ -52,9 +57,12 @@ class IntcodeComputer:
                 self._idx += 4
 
             elif instruction == Instruction.INPUT:
-                indata = self.inputs.pop(0)
-                self._set_value(mode1, 1, indata)
-                self._idx += 2
+                try:
+                    indata = self.inputs.pop(0)
+                    self._set_value(mode1, 1, indata)
+                    self._idx += 2
+                except IndexError:
+                    raise MissingInputException
 
             elif instruction == Instruction.OUTPUT:
                 yield self._get_param(mode1, 1)
@@ -90,6 +98,23 @@ class IntcodeComputer:
 
             else:
                 raise IntcodeProgramException(f'Invalid instruction {instruction}.')
+
+    def serialize_state(self) -> str:
+        return json.dumps({
+            'inputs': self.inputs,
+            'idx': self._idx,
+            'relative_base': self._relative_base,
+            'program': self._program
+        })
+
+    def load_serialized_state(self, serialized_state: str) -> None:
+        state: Dict[str, ANY] = json.loads(serialized_state)
+        self.inputs = state['inputs']
+        self._idx = state['idx']
+        self._relative_base = state['relative_base']
+        self._program = defaultdict(int)
+        for i, op in state['program'].items():
+            self._program[int(i)] = op
 
     def _get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
         try:
