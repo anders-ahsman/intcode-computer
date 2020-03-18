@@ -100,21 +100,14 @@ class IntcodeComputer:
                 raise IntcodeProgramException(f'Invalid instruction {instruction}.')
 
     def serialize_state(self) -> str:
-        return json.dumps({
-            'inputs': self.inputs,
-            'idx': self._idx,
-            'relative_base': self._relative_base,
-            'program': self._program
-        })
+        return json.dumps(self.__dict__)
 
     def load_serialized_state(self, serialized_state: str) -> None:
-        state: Dict[str, ANY] = json.loads(serialized_state)
-        self.inputs = state['inputs']
-        self._idx = state['idx']
-        self._relative_base = state['relative_base']
-        self._program = defaultdict(int)
-        for i, op in state['program'].items():
-            self._program[int(i)] = op
+        for k, v in json.loads(serialized_state).items():
+            if k == '_program':
+                self._program = defaultdict(int, {int(i) : op for i, op in v.items()})
+            else:
+                setattr(self, k, v)
 
     def _get_modes(self, opcode: int) -> Tuple[Mode, Mode, Mode]:
         try:
