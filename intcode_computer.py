@@ -30,6 +30,7 @@ class Instruction(Enum):
 
 class IntcodeComputer:
     def __init__(self, program: List[int], inputs: List[int]) -> None:
+        self.has_completed: bool = False
         self.inputs: List[int] = inputs
 
         self._idx: int = 0
@@ -94,6 +95,7 @@ class IntcodeComputer:
                 self._idx += 2
 
             elif instruction == Instruction.ABORT:
+                self.has_completed = True
                 return
 
             else:

@@ -14,10 +14,14 @@ INTCODE_TABLE = os.getenv('INTCODE_TABLE')
 MISSING_INPUT_MSG = \
     'Additional input required. Send using JSON object, e.g.\n' + \
     '{"action": "additional_input", "input": [5]}'
+PROGRAM_COMPLETED_MSG = \
+    'Program already completed.\n' + \
+    'Send new program to run, e.g.\n' + \
+    '{"action": "run", "program": [3,0,4,0,99], "input": [42]}'
 USAGE_MSG = \
     'Send JSON object with program and input to run, e.g.\n' + \
-    '{"action": "run", "program": [3,0,4,0,99], "input": [42]}'
-RESPONSE = { 'statusCode': 200, 'body': '' }
+    '{"action": "run", "program": [4,2,99], "input": []}'
+RESPONSE = {'statusCode': 200, 'body': ''}
 
 def connect_handler(event, context):
     print('event:', event)
@@ -67,11 +71,16 @@ def additional_input_handler(event, context):
 
     try:
         computer = _load_state(connection_id)
+        if computer.has_completed:
+            send_to_client(PROGRAM_COMPLETED_MSG)
+            return RESPONSE
+
         try:
             body = json.loads(event['body'])
             for inp in body['input']:
                 computer.inputs.append(inp)
             _run_program(computer, lambda output: send_to_client(str(output)))
+            _save_state(computer, connection_id)
             send_to_client('Program completed.')
         except MissingInputException:
             send_to_client(MISSING_INPUT_MSG)
