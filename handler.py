@@ -17,26 +17,17 @@ MISSING_INPUT_MSG = \
 USAGE_MSG = \
     'Send JSON object with program and input to run, e.g.\n' + \
     '{"action": "run", "program": [3,0,4,0,99], "input": [42]}'
+RESPONSE = { 'statusCode': 200, 'body': '' }
 
 def connect_handler(event, context):
     print('event:', event)
 
-    response = {
-        "statusCode": 200,
-        "body": "connect"
-    }
-
-    return response
+    return RESPONSE
 
 def disconnect_handler(event, context):
     print('event:', event)
 
-    response = {
-        "statusCode": 200,
-        "body": "disconnect"
-    }
-
-    return response
+    return RESPONSE
 
 def default_handler(event, context):
     print('event:', event)
@@ -62,12 +53,7 @@ def default_handler(event, context):
     except (JSONDecodeError, KeyError):
         send_to_client(USAGE_MSG)
 
-    response = {
-        "statusCode": 200,
-        "body": "default"
-    }
-
-    return response
+    return RESPONSE
 
 def additional_input_handler(event, context):
     print('event:', event)
@@ -97,12 +83,7 @@ def additional_input_handler(event, context):
     except KeyError:
         send_to_client(USAGE_MSG)
 
-    response = {
-        "statusCode": 200,
-        "body": "additional_input"
-    }
-
-    return response
+    return RESPONSE
 
 def _run_program(computer: IntcodeComputer, output_cb: Callable[[int], None]):
     it = computer.run()
