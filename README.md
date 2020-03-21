@@ -10,7 +10,7 @@ The intcode computer from Advent of Code 2019 (https://adventofcode.com/2019) as
 - Create virtual environment with required Python packages: `$ pipenv install`
 - Load environment: `$ pipenv shell`
 - Run unit tests: `$ pytest`
-- Deploy (requires AWS account and Serverless to be installed): `$ sls deploy`
+- Deploy (requires AWS account and Serverless Framework to be installed): `$ sls deploy`
 - Check output from deploy command under "endpoints" and set environment variable: `$ export DEPLOYED_URL="wss://your-deployed-url"`
 - Run E2E tests: `$ pytest test_e2e.py`
 
