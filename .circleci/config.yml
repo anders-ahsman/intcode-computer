@@ -18,7 +18,7 @@ jobs:
           name: Run unit tests
           command: |
             mkdir test-results
-            pipenv run pytest --junitxml=test-results/unit.xml
+            pipenv run pytest -v --junitxml=test-results/unit.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -30,7 +30,7 @@ jobs:
           name: Run e2e tests
           command: |
             export DEPLOYED_URL=`sls info -v | grep ServiceEndpointWebsocket | awk 'gsub("ServiceEndpointWebsocket: ", "")'`
-            pipenv run pytest test_e2e.py --junitxml=test-results/e2e.xml
+            pipenv run pytest test_e2e.py -v --junitxml=test-results/e2e.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
