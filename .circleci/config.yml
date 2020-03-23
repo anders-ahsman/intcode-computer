@@ -25,7 +25,7 @@ jobs:
           path: test-results
       - run:
           name: Deploy
-          command: sls deploy
+          command: sls deploy | grep -v wss:// # Mask deployed URL from logs
       - run:
           name: Run e2e tests
           command: |
