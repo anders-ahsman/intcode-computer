@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: emmry/circleci-docker-primary:1.0.1
+      - image: andersahsman/python-serverless:1.0.0
     steps:
       - checkout
       - restore_cache:
