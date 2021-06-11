@@ -41,3 +41,6 @@ workflows:
     jobs:
       - build:
           context: default
+          filters:
+            branches:
+              only: master
